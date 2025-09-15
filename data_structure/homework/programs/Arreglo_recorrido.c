@@ -16,20 +16,19 @@ siendo estos máximos 10, el arreglo es del tipo entero. Realice el siguiente re
 //NOTA TODOS LOS PROGRAMAS DEBEN ESTAR ESCRITOS EN INGLÉS Y USAR ARGUMENTOS SI SE REQUIERE EN LAS INSTRUCCIONES.
 */
 
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 int main(int argc, char *argv[]) {
-    // Variables declared outside the for loops
     int n, m;
     int i, j;
-    int continuar;
-    int **matriz;
-    int valor;
+    int continue_flag;
+    int **matrix;
     char *num;
     
-    // Arguments code to execute using cmd
+    // Code to handle arguments (as requested)
     if (argc > 1) {
         num = argv[1];
         fprintf(stdout, "argv[1] = %s \n", argv[1]);
@@ -38,13 +37,13 @@ int main(int argc, char *argv[]) {
         printf("\n");
     }
     
-    printf("=== Program P2E - Bidimensional matrix traversal ===\n\n");
+    printf("=== Program P2E - Bidimensional Matrix Traversal ===\n\n");
     
     do {
         // Request matrix dimensions
-        printf("Enter the number of rows (n): ");
+        printf("Enter the number of rows (n, maximum 10): ");
         scanf("%d", &n);
-        printf("Enter the number of columns (m): ");
+        printf("Enter the number of columns (m, maximum 10): ");
         scanf("%d", &m);
         
         // Validate that dimensions are valid
@@ -54,9 +53,9 @@ int main(int argc, char *argv[]) {
         }
         
         // Dynamic memory allocation for the matrix
-        matriz = (int**)malloc(n * sizeof(int*));
+        matrix = (int**)malloc(n * sizeof(int*));
         for (i = 0; i < n; i++) {
-            matriz[i] = (int*)malloc(m * sizeof(int));
+            matrix[i] = (int*)malloc(m * sizeof(int));
         }
         
         // Fill the matrix with values
@@ -64,7 +63,7 @@ int main(int argc, char *argv[]) {
         for (i = 0; i < n; i++) {
             for (j = 0; j < m; j++) {
                 printf("Element [%d][%d]: ", i, j);
-                scanf("%d", &matriz[i][j]);
+                scanf("%d", &matrix[i][j]);
             }
         }
         
@@ -72,7 +71,7 @@ int main(int argc, char *argv[]) {
         printf("\nEntered matrix:\n");
         for (i = 0; i < n; i++) {
             for (j = 0; j < m; j++) {
-                printf("%4d ", matriz[i][j]);
+                printf("%4d ", matrix[i][j]);
             }
             printf("\n");
         }
@@ -84,7 +83,7 @@ int main(int argc, char *argv[]) {
         printf("Sequence: ");
         for (i = 0; i < n; i++) {
             for (j = 0; j < m; j++) {
-                printf("%d ", matriz[i][j]);
+                printf("%d ", matrix[i][j]);
             }
         }
         printf("\n");
@@ -97,19 +96,19 @@ int main(int argc, char *argv[]) {
         }
         printf("\n");
         
-        // 2. Column traversal
-        printf("\n2. Column traversal (from column 0 to column %d):\n", m-1);
+        // 2. Column traversal (CORRECTED: reverse order as requested)
+        printf("\n2. Column traversal (in reverse order):\n");
         printf("Sequence: ");
-        for (j = 0; j < m; j++) {
-            for (i = 0; i < n; i++) {
-                printf("%d ", matriz[i][j]);
+        for (j = m-1; j >= 0; j--) {
+            for (i = n-1; i >= 0; i--) {
+                printf("%d ", matrix[i][j]);
             }
         }
         printf("\n");
         
         printf("Visited positions: ");
-        for (j = 0; j < m; j++) {
-            for (i = 0; i < n; i++) {
+        for (j = m-1; j >= 0; j--) {
+            for (i = n-1; i >= 0; i--) {
                 printf("[%d,%d] ", i, j);
             }
         }
@@ -121,7 +120,7 @@ int main(int argc, char *argv[]) {
             // Main diagonal (when n = m)
             printf("Main diagonal: ");
             for (i = 0; i < n; i++) {
-                printf("%d ", matriz[i][i]);
+                printf("%d ", matrix[i][i]);
             }
             printf("\n");
             
@@ -137,7 +136,7 @@ int main(int argc, char *argv[]) {
             int min_dim = (n < m) ? n : m;
             printf("Diagonal: ");
             for (i = 0; i < min_dim; i++) {
-                printf("%d ", matriz[i][i]);
+                printf("%d ", matrix[i][i]);
             }
             printf("\n");
             
@@ -150,17 +149,18 @@ int main(int argc, char *argv[]) {
         
         // Free memory
         for (i = 0; i < n; i++) {
-            free(matriz[i]);
+            free(matrix[i]);
         }
-        free(matriz);
+        free(matrix);
         
+        // Ask if user wants to continue
         printf("\nDo you want to perform another traversal? (1 = Yes, 0 = No): ");
-        scanf("%d", &continuar);
+        scanf("%d", &continue_flag);
         printf("\n");
         
-    } while (continuar == 1);
+    } while (continue_flag == 1);
     
-    printf("Program terminated. Thank you for using the P2E program!\n");
+    printf("Program finished. Thank you for using the P2E program!\n");
     
     return 0;
 }
