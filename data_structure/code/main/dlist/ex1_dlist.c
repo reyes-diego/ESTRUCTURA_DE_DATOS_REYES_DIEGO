@@ -4,7 +4,7 @@
 #include "dlist.h"
 
 /*
-   Print List - Función auxiliar para imprimir la lista
+   Print List
 */
 
 static void print_list (const DList *list) {
@@ -41,51 +41,18 @@ int main (int argc, char **argv) {
     // Initialize the linked list
     dlist_init(&list, free);
 
-    // ============================================================
-    //  CARGA DE DATOS DESDE LÍNEA DE COMANDOS Passing Arguments to an Application Understanding and
-    // Using C Pointers p 125
-    // ============================================================
-    
-    // Verifica que se hayan pasado argumentos (argc >= 2 porque argv[0] es el nombre del programa)
-    if (argc < 2) {
-        fprintf(stderr, "Uso: %s <valor1> <valor2> ...\n", argv[0]); //para mensajes de error es una buena práctica que permite un mejor manejo de la salida del programa
-        return 1;
-    }
-
-    // Recorre todos los argumentos pasados por línea de comandos
-    // i = 1 porque argv[0] es el nombre del programa, argv[1] es el primer argumento
-    for (i = 1; i < argc; i++) {
-        // Asigna memoria para el nuevo entero
-        if ((data = (int *)malloc(sizeof(int))) == NULL)
-            return 1;
-        
-        // Convierte el argumento de texto a entero usando atoi= Función que convierte una cadena de texto a un número entero.()
-        *data = atoi(argv[i]);
-        
-        // Inserta el nuevo valor al final de la lista
-        // dlist_tail(&list) obtiene el último nodo, dlist_ins_next inserta después de él
-        if (dlist_ins_next(&list, dlist_tail(&list), data) != 0)
-            return 1;
-    }
-
-    // ============================================================
-    // CÓDIGO ORIGINAL ELIMINADO - PRECARGA DE VALORES FIJOS
-    // ============================================================
-    /*
-    // Este bloque original insertaba valores del 10 al 1 al principio de la lista
+    // Fill the linked list
     node = dlist_head(&list);
     for (i = 10; i > 0; i--) {
+
         if ((data = (int *)malloc(sizeof(int))) == NULL)
             return 1;
+
         *data = i;
+
         if (dlist_ins_prev(&list, dlist_head(&list), data) != 0)
             return 1;
     }
-    */
-
-    // ============================================================
-    // A PARTIR DE AQUÍ NO SE MODIFICÓ NADA - CÓDIGO ORIGINAL
-    // ============================================================
 
     print_list(&list);
 
