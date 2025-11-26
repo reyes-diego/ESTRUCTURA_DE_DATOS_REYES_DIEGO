@@ -31,11 +31,13 @@ void heapify(int arr[], int n, int i) {
         printArray(arr, n);
         
         heapify(arr, n, largest);
+    } else {
+        printf("   No swap needed (already valid heap)\n");
     }
 }
 
 void heapSort(int arr[], int n) {
-    int i, j, k;
+    int i;
     
     printf("\n=== BUILDING MAX HEAP ===\n");
     for (i = n / 2 - 1; i >= 0; i--) {
@@ -66,7 +68,7 @@ void heapSort(int arr[], int n) {
 int main(int argc, char *argv[]) {
     int *arr = NULL;
     int n = 0;
-    int i, j, k;
+    int i;
     
     printf("=== HEAP SORT ===\n");
     
