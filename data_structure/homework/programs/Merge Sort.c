@@ -2,52 +2,50 @@
 #include <stdlib.h>
 #include <string.h>
 
-void printArray(int arr[], int n) {
+// Global variable to count steps
+int step = 0;
+
+// Function to print the array
+void printArray(int arr[], int start, int end, char* message) {
     int i;
-    for (i = 0; i < n; i++) {
+    printf("%s [", message);
+    for (i = start; i <= end; i++) {
         printf("%d", arr[i]);
-        if (i < n - 1) printf(", ");
+        if (i < end) printf(", ");
     }
-    printf("\n");
+    printf("]\n");
 }
 
-void printSubArray(int arr[], int left, int right) {
-    int i;
-    printf("[");
-    for (i = left; i <= right; i++) {
-        printf("%d", arr[i]);
-        if (i < right) printf(", ");
-    }
-    printf("]");
-}
-
-void merge(int arr[], int left, int mid, int right) {
+// Function to merge two subarrays
+void merge(int arr[], int left, int middle, int right) {
+    int n1 = middle - left + 1;
+    int n2 = right - middle;
     int i, j, k;
-    int n1 = mid - left + 1;
-    int n2 = right - mid;
     
     // Create temporary arrays
     int *L = (int*)malloc(n1 * sizeof(int));
     int *R = (int*)malloc(n2 * sizeof(int));
     
-    if (L == NULL || R == NULL) {
-        printf("Memory allocation error.\n");
-        return;
-    }
-    
     // Copy data to temporary arrays
     for (i = 0; i < n1; i++)
         L[i] = arr[left + i];
     for (j = 0; j < n2; j++)
-        R[j] = arr[mid + 1 + j];
+        R[j] = arr[middle + 1 + j];
     
-    printf("   Merging: ");
-    printSubArray(arr, left, mid);
-    printf(" and ");
-    printSubArray(arr, mid + 1, right);
+    printf("\n--- STEP %d: MERGING ---\n", ++step);
+    printf("Left subarray: ");
+    for (i = 0; i < n1; i++) {
+        printf("%d", L[i]);
+        if (i < n1-1) printf(", ");
+    }
+    printf("\nRight subarray: ");
+    for (i = 0; i < n2; i++) {
+        printf("%d", R[i]);
+        if (i < n2-1) printf(", ");
+    }
     printf("\n");
     
-    // Merge the temporary arrays back
+    // Merge the temporary arrays
     i = 0;
     j = 0;
     k = left;
@@ -63,141 +61,110 @@ void merge(int arr[], int left, int mid, int right) {
         k++;
     }
     
-    // Copy remaining elements of L[]
+    // Copy remaining elements
     while (i < n1) {
         arr[k] = L[i];
         i++;
         k++;
     }
     
-    // Copy remaining elements of R[]
     while (j < n2) {
         arr[k] = R[j];
         j++;
         k++;
     }
     
-    printf("   Result: ");
-    printSubArray(arr, left, right);
-    printf("\n\n");
+    printf("Merge result: ");
+    printArray(arr, left, right, "");
     
     free(L);
     free(R);
 }
 
-void mergeSortRecursive(int arr[], int left, int right, int *step) {
-    int i, j, k;
-    
+// Main Merge Sort function
+void mergeSort(int arr[], int left, int right) {
     if (left < right) {
-        int mid = left + (right - left) / 2;
+        int middle = left + (right - left) / 2;
         
-        printf("Step %d: Dividing ", *step);
-        printSubArray(arr, left, right);
-        printf(" into ");
-        printSubArray(arr, left, mid);
-        printf(" and ");
-        printSubArray(arr, mid + 1, right);
-        printf("\n");
-        (*step)++;
+        printf("\n=== DIVIDING: ");
+        printArray(arr, left, right, "");
+        printf("    Left half: indices %d to %d\n", left, middle);
+        printf("    Right half: indices %d to %d\n", middle + 1, right);
         
-        // Sort first half
-        mergeSortRecursive(arr, left, mid, step);
-        
-        // Sort second half
-        mergeSortRecursive(arr, mid + 1, right, step);
+        // Sort first and second half
+        mergeSort(arr, left, middle);
+        mergeSort(arr, middle + 1, right);
         
         // Merge the sorted halves
-        printf("Step %d:\n", *step);
-        (*step)++;
-        merge(arr, left, mid, right);
+        merge(arr, left, middle, right);
     }
-}
-
-void mergeSort(int arr[], int n) {
-    int step = 1;
-    printf("\n=== MERGE SORT - DIVIDE AND CONQUER ===\n\n");
-    mergeSortRecursive(arr, 0, n - 1, &step);
 }
 
 int main(int argc, char *argv[]) {
-    int *arr = NULL;
-    int n = 0;
-    int i, j, k;
+    int n, i, capacity;
+    int *arr;
+    char line[1000];
+    char *token;
+    char *num;
     
-    printf("=== MERGE SORT ===\n");
+    printf("===============================================\n");
+    printf("  MERGE SORT ALGORITHM - STEP BY STEP\n");
+    printf("===============================================\n\n");
     
-    // Check if arguments were provided
-    if (argc < 2) {
-        printf("Usage: %s <number1,number2,number3,...>\n", argv[0]);
-        printf("Example: %s 12,11,13,5,6,7\n", argv[0]);
-        printf("Or: %s 12 11 13 5 6 7\n\n", argv[0]);
-        return 1;
+    // Code to handle arguments (as requested)
+    if (argc > 1) {
+        num = argv[1];
+        fprintf(stdout, "argv[1] = %s \n", argv[1]);
+        for (i = 0; i < strlen(argv[1]); i++)
+            fprintf(stdout, "num[%d] = %c \n", i, num[i]);
+        printf("\n");
+        
+        // Use the argument as input
+        strncpy(line, argv[1], sizeof(line) - 1);
+        line[sizeof(line) - 1] = '\0';
+    } else {
+        printf("Enter numbers separated by spaces or commas:\n");
+        fgets(line, sizeof(line), stdin);
     }
     
-    // Check if numbers are comma-separated (single argument) or space-separated (multiple arguments)
-    if (argc == 2 && strchr(argv[1], ',') != NULL) {
-        // Comma-separated format: program "12,11,13,5,6,7"
-        char *input = argv[1];
-        int capacity = 10;
-        
-        arr = (int*)malloc(capacity * sizeof(int));
-        if (arr == NULL) {
-            printf("Memory allocation error.\n");
-            return 1;
+    capacity = 10;
+    arr = (int*)malloc(capacity * sizeof(int));
+    n = 0;
+    
+    token = strtok(line, " ,\n");
+    
+    while (token != NULL) {
+        if (n >= capacity) {
+            capacity *= 2;
+            arr = (int*)realloc(arr, capacity * sizeof(int));
         }
         
-        char *token = strtok(input, ",");
-        while (token != NULL) {
-            if (n >= capacity) {
-                capacity *= 2;
-                int *temp = (int*)realloc(arr, capacity * sizeof(int));
-                if (temp == NULL) {
-                    printf("Memory allocation error.\n");
-                    free(arr);
-                    return 1;
-                }
-                arr = temp;
-            }
-            
-            arr[n] = atoi(token);
-            n++;
-            token = strtok(NULL, ",");
-        }
-    } else {
-        // Space-separated format: program 12 11 13 5 6 7
-        n = argc - 1;
+        arr[n] = atoi(token);
+        n++;
         
-        arr = (int*)malloc(n * sizeof(int));
-        if (arr == NULL) {
-            printf("Memory allocation error.\n");
-            return 1;
-        }
-        
-        for (i = 0; i < n; i++) {
-            arr[i] = atoi(argv[i + 1]);
-        }
+        token = strtok(NULL, " ,\n");
     }
     
     if (n == 0) {
-        printf("No valid numbers entered.\n");
+        printf("Error: You must enter at least one number.\n");
         free(arr);
         return 1;
     }
     
-    printf("\nOriginal array (%d elements): ", n);
-    printArray(arr, n);
+    printf("\n===============================================\n");
+    printf("ORIGINAL ARRAY: ");
+    printArray(arr, 0, n-1, "");
+    printf("===============================================\n");
     
-    mergeSort(arr, n);
+    /* Apply Merge Sort */
+    mergeSort(arr, 0, n - 1);
     
-    printf("\n=== FINAL RESULT ===\n");
-    printf("Sorted array: ");
-    for (i = 0; i < n; i++) {
-        printf("%d", arr[i]);
-        if (i < n - 1) printf(", ");
-    }
-    printf("\n");
+    printf("\n===============================================\n");
+    printf("FINAL SORTED ARRAY: ");
+    printArray(arr, 0, n-1, "");
+    printf("===============================================\n");
+    printf("\nTotal merge steps: %d\n", step);
     
     free(arr);
-    
     return 0;
 }
