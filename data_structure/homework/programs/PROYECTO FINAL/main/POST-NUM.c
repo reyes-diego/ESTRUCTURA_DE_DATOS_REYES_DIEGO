@@ -5,260 +5,260 @@
 #include <windows.h>
 #include <math.h>
 #include "stack.h"
-#include "dlist.h" 
-#include "list.h" 
+#include "dlist.h"
+#include "list.h"
 #define MAX_EXPR 256
 
-/* Variables globales para colores */
+/* Global variables for colors */
 HANDLE hConsole;
 CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 WORD originalAttributes;
 
 /*
-    Inicializar sistema de colores
+    Initialize color system
 */
-void init_colores() {
+void init_colors() {
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
     originalAttributes = consoleInfo.wAttributes;
 }
 
-void color_normal() {
+void normal_color() {
     SetConsoleTextAttribute(hConsole, originalAttributes);
 }
 
-void color_azul() {
+void blue_color() {
     SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
 }
 
-void color_verde() {
+void green_color() {
     SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
 }
 
-void color_amarillo() {
+void yellow_color() {
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
 }
 
-void color_rojo() {
+void red_color() {
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
 }
 
 /*
-    Determinar precedencia de operadores
+    Determine operator precedence
 */
-int precedencia(char op) {
+int precedence(char op) {
     if (op == '+' || op == '-') return 1;
     if (op == '*' || op == '/') return 2;
-    if (op == '^') return 3;  /* Exponente - mayor precedencia */
+    if (op == '^') return 3;  /* Exponent - highest precedence */
     return 0;
 }
 
 /*
-    Verificar si es operador
+    Check if it's an operator
 */
-int es_operador(char c) {
+int is_operator(char c) {
     return (c == '+' || c == '-' || c == '*' || c == '/' || c == '^');
 }
 
 /*
-    Validar sintaxis de la expresion infija - SOLO NUMEROS Y OPERADORES
+    Validate infix expression syntax - ONLY NUMBERS AND OPERATORS
 */
-int validar_sintaxis(const char *infija) {
+int validate_syntax(const char *infix) {
     int i;
-    int len = strlen(infija);
-    int parentesis_balance = 0;
-    int ultimo_fue_operando = 0;
-    int ultimo_fue_operador = 0;
-    int dentro_numero = 0;
+    int len = strlen(infix);
+    int parenthesis_balance = 0;
+    int last_was_operand = 0;
+    int last_was_operator = 0;
+    int inside_number = 0;
     char c;
-    char ultimo_char = '\0';
+    char last_char = '\0';
     
     if (len == 0) {
-        color_rojo();
-        printf("\n  ERROR: La expresion esta vacia\n");
-        color_normal();
+        red_color();
+        printf("\n  ERROR: The expression is empty\n");
+        normal_color();
         return 0;
     }
     
     for (i = 0; i < len; i++) {
-        c = infija[i];
+        c = infix[i];
         
         if (c == ' ') {
-            dentro_numero = 0;
+            inside_number = 0;
             continue;
         }
         
-        /* Verificar caracteres invalidos */
-        if (!isdigit(c) && !es_operador(c) && c != '(' && c != ')') {
-            color_rojo();
-            printf("\n  ERROR: Caracter invalido '%c' en la posicion %d\n", c, i + 1);
-            color_normal();
+        /* Check for invalid characters */
+        if (!isdigit(c) && !is_operator(c) && c != '(' && c != ')') {
+            red_color();
+            printf("\n  ERROR: Invalid character '%c' at position %d\n", c, i + 1);
+            normal_color();
             return 0;
         }
         
-        /* Verificar parentesis */
+        /* Check parentheses */
         if (c == '(') {
-            parentesis_balance++;
-            if (ultimo_fue_operando && !dentro_numero) {
-                color_rojo();
-                printf("\n  ERROR: Falta operador antes del parentesis '(' en posicion %d\n", i + 1);
-                color_normal();
+            parenthesis_balance++;
+            if (last_was_operand && !inside_number) {
+                red_color();
+                printf("\n  ERROR: Missing operator before parenthesis '(' at position %d\n", i + 1);
+                normal_color();
                 return 0;
             }
-            ultimo_fue_operador = 0;
-            ultimo_fue_operando = 0;
-            dentro_numero = 0;
+            last_was_operator = 0;
+            last_was_operand = 0;
+            inside_number = 0;
         }
         else if (c == ')') {
-            parentesis_balance--;
-            if (parentesis_balance < 0) {
-                color_rojo();
-                printf("\n  ERROR: Parentesis ')' sin apertura en posicion %d\n", i + 1);
-                color_normal();
+            parenthesis_balance--;
+            if (parenthesis_balance < 0) {
+                red_color();
+                printf("\n  ERROR: Closing parenthesis ')' without opening at position %d\n", i + 1);
+                normal_color();
                 return 0;
             }
-            if (ultimo_fue_operador) {
-                color_rojo();
-                printf("\n  ERROR: Falta operando antes del parentesis ')' en posicion %d\n", i + 1);
-                color_normal();
+            if (last_was_operator) {
+                red_color();
+                printf("\n  ERROR: Missing operand before parenthesis ')' at position %d\n", i + 1);
+                normal_color();
                 return 0;
             }
-            if (ultimo_char == '(') {
-                color_rojo();
-                printf("\n  ERROR: Parentesis vacios '()' en posicion %d\n", i + 1);
-                color_normal();
+            if (last_char == '(') {
+                red_color();
+                printf("\n  ERROR: Empty parentheses '()' at position %d\n", i + 1);
+                normal_color();
                 return 0;
             }
-            ultimo_fue_operador = 0;
-            ultimo_fue_operando = 1;
-            dentro_numero = 0;
+            last_was_operator = 0;
+            last_was_operand = 1;
+            inside_number = 0;
         }
         else if (isdigit(c)) {
-            if (dentro_numero) {
-                /* Esto es parte del mismo numero */
+            if (inside_number) {
+                /* This is part of the same number */
             } 
             else {
-                if (ultimo_fue_operando) {
-                    color_rojo();
-                    printf("\n  ERROR: Falta operador entre numeros en posicion %d\n", i + 1);
-                    color_normal();
+                if (last_was_operand) {
+                    red_color();
+                    printf("\n  ERROR: Missing operator between numbers at position %d\n", i + 1);
+                    normal_color();
                     return 0;
                 }
-                ultimo_fue_operando = 1;
-                dentro_numero = 1;
+                last_was_operand = 1;
+                inside_number = 1;
             }
-            ultimo_fue_operador = 0;
+            last_was_operator = 0;
         }
-        else if (es_operador(c)) {
-            if (ultimo_fue_operador) {
-                color_rojo();
-                printf("\n  ERROR: Dos operadores consecutivos en posicion %d\n", i + 1);
-                color_normal();
+        else if (is_operator(c)) {
+            if (last_was_operator) {
+                red_color();
+                printf("\n  ERROR: Two consecutive operators at position %d\n", i + 1);
+                normal_color();
                 return 0;
             }
             if (i == 0 && c != '-' && c != '+') {
-                color_rojo();
-                printf("\n  ERROR: La expresion no puede empezar con un operador\n");
-                color_normal();
+                red_color();
+                printf("\n  ERROR: The expression cannot start with an operator\n");
+                normal_color();
                 return 0;
             }
-            if (ultimo_char == '(' && c != '-' && c != '+') {
-                color_rojo();
-                printf("\n  ERROR: Operador '%c' despues de parentesis '(' en posicion %d\n", c, i + 1);
-                color_normal();
+            if (last_char == '(' && c != '-' && c != '+') {
+                red_color();
+                printf("\n  ERROR: Operator '%c' after parenthesis '(' at position %d\n", c, i + 1);
+                normal_color();
                 return 0;
             }
-            ultimo_fue_operador = 1;
-            ultimo_fue_operando = 0;
-            dentro_numero = 0;
+            last_was_operator = 1;
+            last_was_operand = 0;
+            inside_number = 0;
         }
         
-        ultimo_char = c;
+        last_char = c;
     }
     
-    if (parentesis_balance > 0) {
-        color_rojo();
-        printf("\n  ERROR: Faltan %d parentesis de cierre ')'\n", parentesis_balance);
-        color_normal();
+    if (parenthesis_balance > 0) {
+        red_color();
+        printf("\n  ERROR: Missing %d closing parentheses ')'\n", parenthesis_balance);
+        normal_color();
         return 0;
     }
     
-    if (ultimo_fue_operador) {
-        color_rojo();
-        printf("\n  ERROR: La expresion no puede terminar con un operador\n");
-        color_normal();
+    if (last_was_operator) {
+        red_color();
+        printf("\n  ERROR: The expression cannot end with an operator\n");
+        normal_color();
         return 0;
     }
     
-    color_verde();
-    printf("\n  Sintaxis valida\n");
-    color_normal();
+    green_color();
+    printf("\n  Valid syntax\n");
+    normal_color();
     return 1;
 }
 
 /*
-    Funcion para calcular potencias (exponenciacion)
-    NOTA: El operador ^ tiene asociatividad a la derecha
+    Function to calculate powers (exponentiation)
+    NOTE: The ^ operator has right associativity
 */
-int potencia(int base, int exponente) {
-    int resultado = 1;
-    for (int i = 0; i < exponente; i++) {
-        resultado *= base;
+int power(int base, int exponent) {
+    int result = 1;
+    for (int i = 0; i < exponent; i++) {
+        result *= base;
     }
-    return resultado;
+    return result;
 }
 
 /*
-    Verificar si operador es asociativo a la derecha
-    Solo el operador ^ es asociativo a la derecha
+    Check if operator is right-associative
+    Only the ^ operator is right-associative
 */
-int es_asociativo_derecha(char op) {
+int is_right_associative(char op) {
     return (op == '^');
 }
 
 /*
-    Funcion para evaluar expresion posfija paso a paso - CORREGIDA
-    Ahora sigue exactamente el algoritmo de evaluacion postfija
+    Function to evaluate postfix expression step by step - CORRECTED
+    Now follows exactly the postfix evaluation algorithm
 */
-void evaluar_posfija_paso_a_paso(const char *posfija) {
-    Stack pila;
-    char expresion[MAX_EXPR];
+void evaluate_postfix_step_by_step(const char *postfix) {
+    Stack stack;
+    char expression[MAX_EXPR];
     int i, j;
-    int paso = 1;
-    int resultado_final;
+    int step = 1;
+    int final_result;
     
-    stack_init(&pila, free);
-    
-    printf("\n");
-    color_verde();
-    printf("+-------------------------------------------------------------------------------------------------+\n");
-    printf("|                          EVALUACION DE EXPRESION POSFIJA                                       |\n");
-    printf("|                              PASO A PASO (IZQUIERDA -> DERECHA)                                |\n");
-    printf("+-------------------------------------------------------------------------------------------------+\n");
-    color_normal();
+    stack_init(&stack, free);
     
     printf("\n");
-    color_amarillo();
-    printf("  Expresion Posfija a Evaluar: ");
-    color_azul();
-    printf("%s\n", posfija);
-    color_normal();
+    green_color();
+    printf("+-------------------------------------------------------------------------------------------------+\n");
+    printf("|                          POSTFIX EXPRESSION EVALUATION                                          |\n");
+    printf("|                              STEP BY STEP (LEFT -> RIGHT)                                       |\n");
+    printf("+-------------------------------------------------------------------------------------------------+\n");
+    normal_color();
     
-    printf("  Metodo: Recorrido de IZQUIERDA A DERECHA, usando una pila\n");
-    printf("  Cada operacion se realiza cuando se encuentra un operador\n\n");
+    printf("\n");
+    yellow_color();
+    printf("  Postfix Expression to Evaluate: ");
+    blue_color();
+    printf("%s\n", postfix);
+    normal_color();
+    
+    printf("  Method: Traversal from LEFT TO RIGHT, using a stack\n");
+    printf("  Each operation is performed when an operator is found\n\n");
     
     printf("+---------------------------------------------------------------------------------------------------------+\n");
-    printf("| PASO |      PILA ACTUAL       |      OPERACION REALIZADA      |               RESULTADO                |\n");
+    printf("| STEP |      CURRENT STACK      |      OPERATION PERFORMED      |               RESULT                  |\n");
     printf("+---------------------------------------------------------------------------------------------------------+\n");
     
-    /* Copiar la expresion original */
-    strcpy(expresion, posfija);
+    /* Copy the original expression */
+    strcpy(expression, postfix);
     
-    /* Procesar la expresion token por token */
+    /* Process the expression token by token */
     i = 0;
-    while (i < strlen(expresion)) {
-        /* Saltar espacios */
-        if (expresion[i] == ' ') {
+    while (i < strlen(expression)) {
+        /* Skip spaces */
+        if (expression[i] == ' ') {
             i++;
             continue;
         }
@@ -266,184 +266,184 @@ void evaluar_posfija_paso_a_paso(const char *posfija) {
         char token[20];
         int token_idx = 0;
         
-        /* Extraer token */
-        while (i < strlen(expresion) && expresion[i] != ' ') {
-            token[token_idx++] = expresion[i++];
+        /* Extract token */
+        while (i < strlen(expression) && expression[i] != ' ') {
+            token[token_idx++] = expression[i++];
         }
         token[token_idx] = '\0';
         
-        /* Mostrar paso actual */
-        printf("| %3d  | ", paso);
+        /* Show current step */
+        printf("| %3d  | ", step);
         
-        /* Imprimir contenido de la pila */
-        Stack temp_pila;
-        stack_init(&temp_pila, NULL);
+        /* Print stack content */
+        Stack temp_stack;
+        stack_init(&temp_stack, NULL);
         
-        /* Contar elementos en pila */
-        int pila_count = 0;
-        int *elementos_pila[100];
+        /* Count elements in stack */
+        int stack_count = 0;
+        int *stack_elements[100];
         
-        while (stack_size(&pila) > 0) {
+        while (stack_size(&stack) > 0) {
             int *elem;
-            stack_pop(&pila, (void **)&elem);
-            elementos_pila[pila_count++] = elem;
-            stack_push(&temp_pila, elem);
+            stack_pop(&stack, (void **)&elem);
+            stack_elements[stack_count++] = elem;
+            stack_push(&temp_stack, elem);
         }
         
-        /* Restaurar pila original */
-        while (stack_size(&temp_pila) > 0) {
+        /* Restore original stack */
+        while (stack_size(&temp_stack) > 0) {
             int *elem;
-            stack_pop(&temp_pila, (void **)&elem);
-            stack_push(&pila, elem);
+            stack_pop(&temp_stack, (void **)&elem);
+            stack_push(&stack, elem);
         }
         
-        stack_destroy(&temp_pila);
+        stack_destroy(&temp_stack);
         
-        /* Imprimir pila de derecha a izquierda */
-        if (pila_count == 0) {
-            printf("%-22s", "[Vacia]");
+        /* Print stack from right to left */
+        if (stack_count == 0) {
+            printf("%-22s", "[Empty]");
         } else {
-            char pila_str[50] = "";
-            for (int k = pila_count - 1; k >= 0; k--) {
+            char stack_str[50] = "";
+            for (int k = stack_count - 1; k >= 0; k--) {
                 char num_str[10];
-                sprintf(num_str, "%d", *elementos_pila[k]);
-                strcat(pila_str, num_str);
-                if (k > 0) strcat(pila_str, " ");
+                sprintf(num_str, "%d", *stack_elements[k]);
+                strcat(stack_str, num_str);
+                if (k > 0) strcat(stack_str, " ");
             }
-            printf("%-22s", pila_str);
+            printf("%-22s", stack_str);
         }
         
-        /* Si es un numero */
+        /* If it's a number */
         if (isdigit(token[0])) {
             int *num_ptr = (int *)malloc(sizeof(int));
             *num_ptr = atoi(token);
-            stack_push(&pila, num_ptr);
+            stack_push(&stack, num_ptr);
             
-            printf("| LEER: %-23s | %-37s |\n", token, "Apilar numero");
+            printf("| READ: %-23s | %-37s |\n", token, "Push number");
         }
-        /* Si es un operador */
-        else if (es_operador(token[0])) {
-            /* Verificar que hay al menos dos operandos en la pila */
-            if (stack_size(&pila) < 2) {
-                printf("| ERROR: Operador sin operandos suficientes |\n");
+        /* If it's an operator */
+        else if (is_operator(token[0])) {
+            /* Verify there are at least two operands in the stack */
+            if (stack_size(&stack) < 2) {
+                printf("| ERROR: Operator without sufficient operands |\n");
                 break;
             }
             
-            /* Obtener operandos (nota: segundo operando primero) */
+            /* Get operands (note: second operand first) */
             int *num2_ptr, *num1_ptr;
-            stack_pop(&pila, (void **)&num2_ptr);
-            stack_pop(&pila, (void **)&num1_ptr);
+            stack_pop(&stack, (void **)&num2_ptr);
+            stack_pop(&stack, (void **)&num1_ptr);
             
             int num1 = *num1_ptr;
             int num2 = *num2_ptr;
-            int resultado;
+            int result;
             
-            /* Realizar la operacion */
+            /* Perform the operation */
             switch (token[0]) {
                 case '+':
-                    resultado = num1 + num2;
+                    result = num1 + num2;
                     break;
                 case '-':
-                    resultado = num1 - num2;
+                    result = num1 - num2;
                     break;
                 case '*':
-                    resultado = num1 * num2;
+                    result = num1 * num2;
                     break;
                 case '/':
                     if (num2 != 0) {
-                        resultado = num1 / num2;
+                        result = num1 / num2;
                     } else {
-                        resultado = 0;
+                        result = 0;
                     }
                     break;
                 case '^':
-                    resultado = potencia(num1, num2);
+                    result = power(num1, num2);
                     break;
                 default:
-                    resultado = 0;
+                    result = 0;
             }
             
-            /* Mostrar operacion realizada */
-            char operacion_str[50];
-            sprintf(operacion_str, "%d %d %c", num1, num2, token[0]);
-            printf("| %-30s | ", operacion_str);
+            /* Show operation performed */
+            char operation_str[50];
+            sprintf(operation_str, "%d %d %c", num1, num2, token[0]);
+            printf("| %-30s | ", operation_str);
             
-            /* Mostrar resultado */
-            char resultado_str[40];
-            sprintf(resultado_str, "= %d", resultado);
-            color_verde();
-            printf("%-37s", resultado_str);
-            color_normal();
+            /* Show result */
+            char result_str[40];
+            sprintf(result_str, "= %d", result);
+            green_color();
+            printf("%-37s", result_str);
+            normal_color();
             printf(" |\n");
             
-            /* Liberar memoria de operandos */
+            /* Free operand memory */
             free(num1_ptr);
             free(num2_ptr);
             
-            /* Apilar resultado */
+            /* Push result */
             int *res_ptr = (int *)malloc(sizeof(int));
-            *res_ptr = resultado;
-            stack_push(&pila, res_ptr);
+            *res_ptr = result;
+            stack_push(&stack, res_ptr);
         }
         
-        paso++;
+        step++;
     }
     
     printf("+---------------------------------------------------------------------------------------------------------+\n");
     
-    /* Obtener resultado final */
-    if (stack_size(&pila) == 1) {
-        int *res_final_ptr;
-        stack_pop(&pila, (void **)&res_final_ptr);
-        resultado_final = *res_final_ptr;
-        free(res_final_ptr);
+    /* Get final result */
+    if (stack_size(&stack) == 1) {
+        int *final_res_ptr;
+        stack_pop(&stack, (void **)&final_res_ptr);
+        final_result = *final_res_ptr;
+        free(final_res_ptr);
     } else {
-        resultado_final = 0;
+        final_result = 0;
     }
     
-    /* Limpiar pila */
-    while (stack_size(&pila) > 0) {
+    /* Clean stack */
+    while (stack_size(&stack) > 0) {
         int *elem;
-        stack_pop(&pila, (void **)&elem);
+        stack_pop(&stack, (void **)&elem);
         free(elem);
     }
     
-    stack_destroy(&pila);
+    stack_destroy(&stack);
     
-    /* Mostrar resultado final */
+    /* Show final result */
     printf("\n");
-    color_verde();
+    green_color();
     printf("+-------------------------------------------------------------------------------------------------+\n");
-    printf("|                                RESULTADO FINAL DE EVALUACION                                     |\n");
+    printf("|                                FINAL EVALUATION RESULT                                          |\n");
     printf("|-------------------------------------------------------------------------------------------------|\n");
-    color_normal();
+    normal_color();
     printf("|                                                                                                 |\n");
-    printf("|   Expresion Posfija Original: ");
-    color_amarillo();
-    printf("%-60s", posfija);
-    color_normal();
+    printf("|   Original Postfix Expression: ");
+    yellow_color();
+    printf("%-60s", postfix);
+    normal_color();
     printf(" |\n");
     printf("|                                                                                                 |\n");
-    printf("|   Resultado de la Evaluacion: ");
-    color_azul();
-    printf("%-58d", resultado_final);
-    color_normal();
+    printf("|   Evaluation Result: ");
+    blue_color();
+    printf("%-58d", final_result);
+    normal_color();
     printf(" |\n");
     printf("|                                                                                                 |\n");
     printf("+-------------------------------------------------------------------------------------------------+\n");
 }
 
 /*
-    Imprimir el contenido del stack
+    Print stack content
 */
-void imprimir_stack(Stack *stack, char nuevo_elemento, int resaltar) {
+void print_stack(Stack *stack, char new_element, int highlight) {
     Stack temp_stack;
     char *op_ptr;
-    char elementos[MAX_EXPR];
+    char elements[MAX_EXPR];
     int count = 0;
     int i;
-    int espacios;
-    int longitud_total;
+    int spaces;
+    int total_length;
     
     if (stack_size(stack) == 0) {
         for (i = 0; i < 25; i++) printf(" ");
@@ -454,7 +454,7 @@ void imprimir_stack(Stack *stack, char nuevo_elemento, int resaltar) {
     
     while (stack_size(stack) > 0) {
         stack_pop(stack, (void **)&op_ptr);
-        elementos[count++] = *op_ptr;
+        elements[count++] = *op_ptr;
         stack_push(&temp_stack, op_ptr);
     }
     
@@ -463,29 +463,29 @@ void imprimir_stack(Stack *stack, char nuevo_elemento, int resaltar) {
         stack_push(stack, op_ptr);
     }
     
-    longitud_total = (count * 2) - 1;
-    espacios = (25 - longitud_total) / 2;
+    total_length = (count * 2) - 1;
+    spaces = (25 - total_length) / 2;
     
-    if (espacios < 0) espacios = 0;
+    if (spaces < 0) spaces = 0;
     
-    for (i = 0; i < espacios; i++) {
+    for (i = 0; i < spaces; i++) {
         printf(" ");
     }
     
     for (i = 0; i < count; i++) {
-        if (resaltar && i == 0 && elementos[i] == nuevo_elemento) {
-            color_azul();
-            printf("%c", elementos[i]);
-            color_normal();
+        if (highlight && i == 0 && elements[i] == new_element) {
+            blue_color();
+            printf("%c", elements[i]);
+            normal_color();
         } else {
-            printf("%c", elementos[i]);
+            printf("%c", elements[i]);
         }
         
         if (i < count - 1) printf(" ");
     }
     
-    int espacios_restantes = 25 - (espacios + longitud_total);
-    for (i = 0; i < espacios_restantes; i++) {
+    int remaining_spaces = 25 - (spaces + total_length);
+    for (i = 0; i < remaining_spaces; i++) {
         printf(" ");
     }
     
@@ -493,115 +493,115 @@ void imprimir_stack(Stack *stack, char nuevo_elemento, int resaltar) {
 }
 
 /*
-    Imprimir expresion con el ultimo elemento en azul
+    Print expression with last element in blue
 */
-void imprimir_operacion_coloreada(const char *operacion, int longitud, int resaltar_ultimo) {
+void print_colored_operation(const char *operation, int length, int highlight_last) {
     int i;
-    int espacios;
-    int longitud_total;
+    int spaces;
+    int total_length;
     
-    if (longitud == 0) {
+    if (length == 0) {
         for (i = 0; i < 29; i++) printf(" ");
         return;
     }
     
-    longitud_total = (longitud * 2) - 1;
-    espacios = (29 - longitud_total) / 2;
+    total_length = (length * 2) - 1;
+    spaces = (29 - total_length) / 2;
     
-    if (espacios < 0) espacios = 0;
+    if (spaces < 0) spaces = 0;
     
-    for (i = 0; i < espacios; i++) {
+    for (i = 0; i < spaces; i++) {
         printf(" ");
     }
     
-    for (i = 0; i < longitud; i++) {
-        if (resaltar_ultimo && i == longitud - 1) {
-            color_azul();
-            printf("%c", operacion[i]);
-            color_normal();
+    for (i = 0; i < length; i++) {
+        if (highlight_last && i == length - 1) {
+            blue_color();
+            printf("%c", operation[i]);
+            normal_color();
         } else {
-            printf("%c", operacion[i]);
+            printf("%c", operation[i]);
         }
-        if (i < longitud - 1) printf(" ");
+        if (i < length - 1) printf(" ");
     }
     
-    int espacios_restantes = 29 - (espacios + longitud_total);
-    for (i = 0; i < espacios_restantes; i++) {
+    int remaining_spaces = 29 - (spaces + total_length);
+    for (i = 0; i < remaining_spaces; i++) {
         printf(" ");
     }
 }
 
 /*
-    Convertir infija a posfija - CORREGIDA para asociatividad del operador ^
+    Convert infix to postfix - CORRECTED for ^ operator associativity
 */
-void infija_a_posfija(const char *infija, char *posfija) {
+void infix_to_postfix(const char *infix, char *postfix) {
     Stack stack;
-    int i, j = 0, paso = 1;
-    char temp_operacion[MAX_EXPR] = "";
-    int longitud = strlen(infija);
+    int i, j = 0, step = 1;
+    char temp_operation[MAX_EXPR] = "";
+    int length = strlen(infix);
     
     stack_init(&stack, free);
     
     printf("\n");
-    color_verde();
+    green_color();
     printf("+-------------------------------------------------------------------------------------------------+\n");
-    printf("|                          CONVERSION DE INFIJA A POSFIJA                                        |\n");
-    printf("|                                ALGORITMO PASO A PASO                                           |\n");
+    printf("|                          INFIX TO POSTFIX CONVERSION                                           |\n");
+    printf("|                                STEP-BY-STEP ALGORITHM                                          |\n");
     printf("+-------------------------------------------------------------------------------------------------+\n");
-    color_normal();
+    normal_color();
     
     printf("\n");
-    color_amarillo();
-    printf("  Expresion Infija Ingresada: ");
-    color_azul();
-    printf("%s\n", infija);
-    color_normal();
+    yellow_color();
+    printf("  Entered Infix Expression: ");
+    blue_color();
+    printf("%s\n", infix);
+    normal_color();
     
-    printf("  Metodo de Recorrido: ");
-    color_verde();
-    printf("IZQUIERDA -> DERECHA");
-    color_normal();
-    printf(" (primer elemento primero)\n\n");
+    printf("  Traversal Method: ");
+    green_color();
+    printf("LEFT -> RIGHT");
+    normal_color();
+    printf(" (first element first)\n\n");
     
     printf("+-----------------------------------------------------------------------------------------------------------------+\n");
     printf("|       |                          |                         |                             |\n");
-    printf("|  PASO |         ACCION           |       STACK (D -> I)    |       OPERACION (I -> D)    |\n");
+    printf("|  STEP |         ACTION           |       STACK (D -> I)    |       OPERATION (I -> D)    |\n");
     printf("|       |                          |                         |                             |\n");
     printf("|-------+--------------------------+-------------------------+-----------------------------|\n");
     
-    /* Procesar cada caracter */
-    for (i = 0; i < longitud; i++) {
-        char c = infija[i];
+    /* Process each character */
+    for (i = 0; i < length; i++) {
+        char c = infix[i];
         if (c == ' ') continue;
         
-        printf("|  %3d  | ", paso);
+        printf("|  %3d  | ", step);
         
-        /* Si es un digito */
+        /* If it's a digit */
         if (isdigit(c)) {
-            /* Extraer numero completo */
-            char numero[20];
+            /* Extract complete number */
+            char number[20];
             int num_idx = 0;
-            while (i < longitud && isdigit(infija[i])) {
-                numero[num_idx++] = infija[i++];
+            while (i < length && isdigit(infix[i])) {
+                number[num_idx++] = infix[i++];
             }
-            numero[num_idx] = '\0';
-            i--; /* Ajustar indice */
+            number[num_idx] = '\0';
+            i--; /* Adjust index */
             
-            /* Agregar a la expresion posfija */
+            /* Add to postfix expression */
             for (int k = 0; k < num_idx; k++) {
-                temp_operacion[j++] = numero[k];
+                temp_operation[j++] = number[k];
             }
-            temp_operacion[j++] = ' ';
-            temp_operacion[j] = '\0';
+            temp_operation[j++] = ' ';
+            temp_operation[j] = '\0';
             
-            printf("AGREGAR [%s]       ", numero);
+            printf("ADD [%s]       ", number);
             printf("|    ");
-            imprimir_stack(&stack, '\0', 0);
+            print_stack(&stack, '\0', 0);
             printf(" | ");
-            imprimir_operacion_coloreada(temp_operacion, j, 0);
+            print_colored_operation(temp_operation, j, 0);
             printf(" |\n");
         }
-        /* Si es parentesis izquierdo */
+        /* If it's left parenthesis */
         else if (c == '(') {
             char *op_ptr = (char *)malloc(sizeof(char));
             *op_ptr = c;
@@ -609,85 +609,85 @@ void infija_a_posfija(const char *infija, char *posfija) {
             
             printf("PUSH [%c]            ", c);
             printf("|    ");
-            imprimir_stack(&stack, c, 1);
+            print_stack(&stack, c, 1);
             printf(" | ");
-            imprimir_operacion_coloreada(temp_operacion, j, 0);
+            print_colored_operation(temp_operation, j, 0);
             printf(" |\n");
         }
-        /* Si es parentesis derecho */
+        /* If it's right parenthesis */
         else if (c == ')') {
-            printf("ENCONTRADO [%c]       ", c);
+            printf("FOUND [%c]       ", c);
             printf("|    ");
-            imprimir_stack(&stack, '\0', 0);
+            print_stack(&stack, '\0', 0);
             printf(" | ");
-            imprimir_operacion_coloreada(temp_operacion, j, 0);
+            print_colored_operation(temp_operation, j, 0);
             printf(" |\n");
             
             printf("|-------+--------------------------+-------------------------+-----------------------------|\n");
-            paso++;
+            step++;
             
-            /* Vaciar stack hasta encontrar '(' */
+            /* Empty stack until '(' is found */
             char *op_ptr;
             while (stack_size(&stack) > 0) {
                 char *top = (char *)stack_peek(&stack);
                 if (top && *top == '(') {
                     stack_pop(&stack, (void **)&op_ptr);
                     free(op_ptr);
-                    printf("|  %3d  | POP [(]             ", paso);
+                    printf("|  %3d  | POP [(]             ", step);
                     printf("|    ");
-                    imprimir_stack(&stack, '\0', 0);
+                    print_stack(&stack, '\0', 0);
                     printf(" | ");
-                    imprimir_operacion_coloreada(temp_operacion, j, 0);
+                    print_colored_operation(temp_operation, j, 0);
                     printf(" |\n");
                     break;
                 } else {
                     stack_pop(&stack, (void **)&op_ptr);
-                    temp_operacion[j++] = *op_ptr;
-                    temp_operacion[j++] = ' ';
-                    temp_operacion[j] = '\0';
+                    temp_operation[j++] = *op_ptr;
+                    temp_operation[j++] = ' ';
+                    temp_operation[j] = '\0';
                     
-                    printf("|  %3d  | POP [%c] (buscar '(') ", paso, *op_ptr);
+                    printf("|  %3d  | POP [%c] (find '(') ", step, *op_ptr);
                     printf("|    ");
-                    imprimir_stack(&stack, '\0', 0);
+                    print_stack(&stack, '\0', 0);
                     printf(" | ");
-                    imprimir_operacion_coloreada(temp_operacion, j, 1);
+                    print_colored_operation(temp_operation, j, 1);
                     printf(" |\n");
                     
                     free(op_ptr);
-                    paso++;
+                    step++;
                 }
             }
             printf("|-------+--------------------------+-------------------------+-----------------------------|\n");
-            paso--;
+            step--;
         }
-        /* Si es operador */
-        else if (es_operador(c)) {
-            /* Para operador ^ (asociativo a la derecha), manejo especial */
+        /* If it's an operator */
+        else if (is_operator(c)) {
+            /* For ^ operator (right-associative), special handling */
             while (stack_size(&stack) > 0) {
                 char *top = (char *)stack_peek(&stack);
                 if (top && *top != '(') {
-                    int prec_top = precedencia(*top);
-                    int prec_actual = precedencia(c);
+                    int prec_top = precedence(*top);
+                    int prec_current = precedence(c);
                     
-                    /* Para ^ (asociativo a derecha), solo sacamos si tiene mayor precedencia */
-                    if (prec_top > prec_actual || 
-                        (prec_top == prec_actual && !es_asociativo_derecha(c))) {
+                    /* For ^ (right-associative), we only pop if it has higher precedence */
+                    if (prec_top > prec_current || 
+                        (prec_top == prec_current && !is_right_associative(c))) {
                         char *op_ptr;
                         stack_pop(&stack, (void **)&op_ptr);
-                        temp_operacion[j++] = *op_ptr;
-                        temp_operacion[j++] = ' ';
-                        temp_operacion[j] = '\0';
+                        temp_operation[j++] = *op_ptr;
+                        temp_operation[j++] = ' ';
+                        temp_operation[j] = '\0';
                         
-                        printf("POP [%c] (prec %d>=%d) ", *op_ptr, precedencia(*op_ptr), precedencia(c));
+                        printf("POP [%c] (prec %d>=%d) ", *op_ptr, precedence(*op_ptr), precedence(c));
                         printf("|    ");
-                        imprimir_stack(&stack, '\0', 0);
+                        print_stack(&stack, '\0', 0);
                         printf(" | ");
-                        imprimir_operacion_coloreada(temp_operacion, j, 1);
+                        print_colored_operation(temp_operation, j, 1);
                         printf(" |\n");
-                        printf("|  %3d  | ", paso + 1);
+                        printf("|  %3d  | ", step + 1);
                         
                         free(op_ptr);
-                        paso++;
+                        step++;
                     } else {
                         break;
                     }
@@ -696,46 +696,46 @@ void infija_a_posfija(const char *infija, char *posfija) {
                 }
             }
             
-            /* PUSH del operador actual */
+            /* PUSH current operator */
             char *op_ptr = (char *)malloc(sizeof(char));
             *op_ptr = c;
             stack_push(&stack, op_ptr);
             
             printf("PUSH [%c]            ", c);
             printf("|    ");
-            imprimir_stack(&stack, c, 1);
+            print_stack(&stack, c, 1);
             printf(" | ");
-            imprimir_operacion_coloreada(temp_operacion, j, 0);
+            print_colored_operation(temp_operation, j, 0);
             printf(" |\n");
         }
         
-        if (i < longitud - 1) {
+        if (i < length - 1) {
             printf("|-------+--------------------------+-------------------------+-----------------------------|\n");
         }
-        paso++;
+        step++;
     }
     
-    /* Vaciar stack restante */
+    /* Empty remaining stack */
     if (stack_size(&stack) > 0) {
         printf("|-------+--------------------------+-------------------------+-----------------------------|\n");
-        color_amarillo();
-        printf("|       |     VACIANDO STACK       |                         |                             |\n");
-        color_normal();
+        yellow_color();
+        printf("|       |     EMPTYING STACK       |                         |                             |\n");
+        normal_color();
         printf("|-------+--------------------------+-------------------------+-----------------------------|\n");
     }
     
     while (stack_size(&stack) > 0) {
         char *op_ptr;
         stack_pop(&stack, (void **)&op_ptr);
-        temp_operacion[j++] = *op_ptr;
-        temp_operacion[j++] = ' ';
-        temp_operacion[j] = '\0';
+        temp_operation[j++] = *op_ptr;
+        temp_operation[j++] = ' ';
+        temp_operation[j] = '\0';
         
-        printf("|  %3d  | POP FINAL [%c]       ", paso, *op_ptr);
+        printf("|  %3d  | FINAL POP [%c]       ", step, *op_ptr);
         printf("|    ");
-        imprimir_stack(&stack, '\0', 0);
+        print_stack(&stack, '\0', 0);
         printf(" | ");
-        imprimir_operacion_coloreada(temp_operacion, j, 1);
+        print_colored_operation(temp_operation, j, 1);
         printf(" |\n");
         
         if (stack_size(&stack) > 0) {
@@ -743,32 +743,32 @@ void infija_a_posfija(const char *infija, char *posfija) {
         }
         
         free(op_ptr);
-        paso++;
+        step++;
     }
     
     printf("+-----------------------------------------------------------------------------------------------------------------+\n");
     
-    /* Eliminar espacio final si existe */
-    if (j > 0 && temp_operacion[j-1] == ' ') {
-        temp_operacion[j-1] = '\0';
+    /* Remove final space if exists */
+    if (j > 0 && temp_operation[j-1] == ' ') {
+        temp_operation[j-1] = '\0';
     }
     
-    strcpy(posfija, temp_operacion);
+    strcpy(postfix, temp_operation);
     
     printf("\n");
-    color_verde();
+    green_color();
     printf("+-------------------------------------------------------------------------------------------------+\n");
-    printf("|                                RESULTADO FINAL                                                 |\n");
+    printf("|                                FINAL RESULT                                                    |\n");
     printf("|-------------------------------------------------------------------------------------------------|\n");
-    color_normal();
+    normal_color();
     printf("|                                                                                                 |\n");
-    printf("|   Expresion Posfija: ");
-    color_azul();
-    printf("%-58s", posfija);
-    color_normal();
+    printf("|   Postfix Expression: ");
+    blue_color();
+    printf("%-58s", postfix);
+    normal_color();
     printf(" |\n");
     printf("|                                                                                                 |\n");
-    printf("|   NOTA: El operador ^ tiene asociatividad a la derecha                                        |\n");
+    printf("|   NOTE: The ^ operator has right associativity                                                |\n");
     printf("|                                                                                                 |\n");
     printf("+-------------------------------------------------------------------------------------------------+\n");
     
@@ -779,116 +779,116 @@ void infija_a_posfija(const char *infija, char *posfija) {
     Main
 */
 int main(void) {
-    char infija[MAX_EXPR];
-    char posfija[MAX_EXPR];
-    char continuar;
+    char infix[MAX_EXPR];
+    char postfix[MAX_EXPR];
+    char continue_choice;
     
-    init_colores();
+    init_colors();
     
     do {
         system("cls");
         
         printf("\n\n");
-        color_verde();
+        green_color();
         printf("+-------------------------------------------------------------------------------------------------+\n");
         printf("|                                                                                                 |\n");
-        printf("|                       CALCULADORA INFIJA A POSFIJA                                              |\n");
-        printf("|                         CONVERSION PASO A PASO                                                  |\n");
+        printf("|                       INFIX TO POSTFIX CALCULATOR                                               |\n");
+        printf("|                         STEP-BY-STEP CONVERSION                                                |\n");
         printf("|                                                                                                 |\n");
         printf("+-------------------------------------------------------------------------------------------------+\n");
-        color_normal();
+        normal_color();
         
         printf("\n");
         printf("+-------------------------------------------------------------------------------------------------+\n");
-        printf("| JERARQUIA DE OPERADORES (de mayor a menor precedencia):                                        |\n");
+        printf("| OPERATOR HIERARCHY (from highest to lowest precedence):                                        |\n");
         printf("+-------------------------------------------------------------------------------------------------|\n");
-        printf("|  1. ( )         Parentesis                                                                     |\n");
-        printf("|  2. ^           Exponentes (asociativo a la derecha)                                           |\n");
-        printf("|  3. * /         Multiplicacion y Division (asociativo a la izquierda)                          |\n");
-        printf("|  4. + -         Suma y Resta (asociativo a la izquierda)                                       |\n");
+        printf("|  1. ( )         Parentheses                                                                   |\n");
+        printf("|  2. ^           Exponents (right-associative)                                                 |\n");
+        printf("|  3. * /         Multiplication and Division (left-associative)                                |\n");
+        printf("|  4. + -         Addition and Subtraction (left-associative)                                   |\n");
         printf("+-------------------------------------------------------------------------------------------------+\n");
         
         printf("\n");
         printf("+-------------------------------------------------------------------------------------------------+\n");
-        printf("| EJEMPLOS DE CONVERSION:                                                                         |\n");
+        printf("| CONVERSION EXAMPLES:                                                                           |\n");
         printf("+-------------------------------------------------------------------------------------------------|\n");
-        printf("|  • 3^2^3 + 4*(5-2)^2 - 8/2^2  ->  3 2 3 ^ ^ 4 5 2 - 2 ^ * + 8 2 2 ^ / -                       |\n");
-        printf("|  • 18/3^2+(4*5-2^3)*2        ->  18 3 2 ^ / 4 5 * 2 3 ^ - 2 * +                               |\n");
-        printf("|  • (12+3)*4                  ->  12 3 + 4 *                                                    |\n");
+        printf("|  â€¢ 3^2^3 + 4*(5-2)^2 - 8/2^2  ->  3 2 3 ^ ^ 4 5 2 - 2 ^ * + 8 2 2 ^ / -                       |\n");
+        printf("|  â€¢ 18/3^2+(4*5-2^3)*2        ->  18 3 2 ^ / 4 5 * 2 3 ^ - 2 * +                               |\n");
+        printf("|  â€¢ (12+3)*4                  ->  12 3 + 4 *                                                    |\n");
         printf("+-------------------------------------------------------------------------------------------------+\n");
         
         printf("\n");
-        color_amarillo();
-        printf("  -> Ingrese la expresion infija (puede usar espacios): ");
-        color_normal();
-        fgets(infija, MAX_EXPR, stdin);
+        yellow_color();
+        printf("  -> Enter the infix expression (you may use spaces): ");
+        normal_color();
+        fgets(infix, MAX_EXPR, stdin);
         
-        infija[strcspn(infija, "\n")] = '\0';
+        infix[strcspn(infix, "\n")] = '\0';
         
-        if (!validar_sintaxis(infija)) {
+        if (!validate_syntax(infix)) {
             printf("\n");
-            color_rojo();
-            printf("  La expresion contiene errores. Por favor, corrija la sintaxis.\n");
-            color_normal();
+            red_color();
+            printf("  The expression contains errors. Please correct the syntax.\n");
+            normal_color();
             printf("\n");
-            color_amarillo();
-            printf("  Desea intentar con otra expresion? (s/n): ");
-            color_normal();
-            continuar = getchar();
+            yellow_color();
+            printf("  Do you want to try another expression? (y/n): ");
+            normal_color();
+            continue_choice = getchar();
             while (getchar() != '\n');
             
-            if (continuar != 's' && continuar != 'S') {
+            if (continue_choice != 'y' && continue_choice != 'Y') {
                 break;
             }
             continue;
         }
         
-        infija_a_posfija(infija, posfija);
+        infix_to_postfix(infix, postfix);
         
         printf("\n");
-        color_verde();
+        green_color();
         printf("+-------------------------------------------------------------------------------------------------+\n");
-        printf("|                                RESULTADO FINAL                                                  |\n");
+        printf("|                                FINAL RESULT                                                    |\n");
         printf("|-------------------------------------------------------------------------------------------------|\n");
-        color_normal();
+        normal_color();
         printf("|                                                                                                 |\n");
-        printf("|   Expresion Infija:   ");
-        color_amarillo();
-        printf("%-60s", infija);
-        color_normal();
+        printf("|   Infix Expression:   ");
+        yellow_color();
+        printf("%-60s", infix);
+        normal_color();
         printf(" |\n");
         printf("|                                                                                                 |\n");
-        printf("|   Expresion Posfija:  ");
-        color_azul();
-        printf("%-60s", posfija);
-        color_normal();
+        printf("|   Postfix Expression:  ");
+        blue_color();
+        printf("%-60s", postfix);
+        normal_color();
         printf(" |\n");
         printf("|                                                                                                 |\n");
-        color_verde();
+        green_color();
         printf("+-------------------------------------------------------------------------------------------------+\n");
-        color_normal();
+        normal_color();
         
         printf("\n");
-        color_verde();
-        printf("  Conversion completada exitosamente\n");
-        color_normal();
+        green_color();
+        printf("  Conversion completed successfully\n");
+        normal_color();
         
-        /* Realizar evaluacion paso a paso */
-        evaluar_posfija_paso_a_paso(posfija);
+        /* Perform step-by-step evaluation */
+        evaluate_postfix_step_by_step(postfix);
         
         printf("\n");
-        color_amarillo();
-        printf("  Desea convertir otra expresion? (s/n): ");
-        color_normal();
-        continuar = getchar();
+        yellow_color();
+        printf("  Do you want to convert another expression? (y/n): ");
+        normal_color();
+        continue_choice = getchar();
         while (getchar() != '\n');
         
-    } while (continuar == 's' || continuar == 'S');
+    } while (continue_choice == 'y' || continue_choice == 'Y');
     
     printf("\n");
-    color_verde();
-    printf("  Gracias por usar la calculadora. Hasta pronto!\n");
-    color_normal();
+    green_color();
+    printf("  Thank you for using the calculator. Goodbye!\n");
+    normal_color();
     printf("\n");
     
     return 0;
