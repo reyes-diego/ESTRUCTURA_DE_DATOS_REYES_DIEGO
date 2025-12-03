@@ -1,10 +1,12 @@
+//INFIX.C - Portable Version
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+// #include <windows.h> // Eliminado
 #include <math.h>
 #include <time.h>
-#include <windows.h>
+// #include <windows.h> // Eliminado
 #include "list.h"
 #include "stack.h"
 #include "queue.h"
@@ -13,50 +15,65 @@
 #define MAX_EXPR 256
 #define MAX_PATH 512
 
-/* Variables globales para colores */
-HANDLE hConsole;
-CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
-WORD originalAttributes;
+// --- Definiciones de Secuencias VT100 ---
+#define RESET_COLOR "\033[0m"
+#define COLOR_RED "\033[1;31m"
+#define COLOR_GREEN "\033[1;32m"
+#define COLOR_YELLOW "\033[1;33m"
+#define COLOR_BLUE "\033[1;34m"
+// Opcional: Puedes definir mÃƒÂ¡s si lo deseas
+// #define COLOR_MAGENTA "\033[1;35m"
+// #define COLOR_CYAN "\033[1;36m"
+// #define COLOR_WHITE "\033[1;37m"
+
+// --- FunciÃƒÂ³n para limpiar pantalla portable ---
+void clear_screen() {
+    printf("\033[2J\033[H");
+    fflush(stdout); // Asegura que la limpieza se aplique inmediatamente
+}
 
 /*
     Inicializar sistema de colores
+    No longer needed with VT100
 */
+/*
 void init_colores() {
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
     originalAttributes = consoleInfo.wAttributes;
 }
+*/
 
 /*
     Restaurar color original
 */
 void color_normal() {
-    SetConsoleTextAttribute(hConsole, originalAttributes);
+    printf(RESET_COLOR);
 }
 
 /*
     Establecer color azul
 */
 void color_azul() {
-    SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+    printf(COLOR_BLUE);
 }
 
 /*
     Establecer color verde
 */
 void color_verde() {
-    SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+    printf(COLOR_GREEN);
 }
 
 void color_amarillo() {
-    SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+    printf(COLOR_YELLOW);
 }
 
 /*
     Establecer color rojo
 */
 void color_rojo() {
-    SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
+    printf(COLOR_RED);
 }
 
 // Structure for tokens
@@ -90,7 +107,7 @@ void guardarOperacionesEnArchivo(Queue *pasos, const char *expresion, double res
 void mostrarPasosEnArchivo(Queue *pasos, FILE *archivo);
 int obtenerRutaArchivo(char *ruta);
 
-// Función para mostrar tabla con formato
+// Funcin para mostrar tabla con formato
 void mostrarTablaEvaluacion(DList *tokens);
 
 // Main function
@@ -101,9 +118,11 @@ int main() {
     Queue pasos;
     double resultado;
     
-    init_colores();
+    // init_colores(); // Quitamos la inicializaciÃƒÂ³n de Windows
     
-    system("cls");
+    clear_screen(); // Limpieza portable
+    // system("cls"); // Quitamos dependencia de windows
+    
     printf("\n\n");
     color_verde();
     printf("+===============================================================================================+\n");
@@ -132,10 +151,10 @@ int main() {
     printf("| EVALUATION ALGORITHM:                                                                         |\n");
     printf("+===============================================================================================|\n");
     printf("|                                                                                               |\n");
-    printf("|  • Expression is read from LEFT TO RIGHT                                                      |\n");
-    printf("|  • Two stacks are used: one for numbers and one for operators                                 |\n");
-    printf("|  • Operators are processed according to their precedence                                      |\n");
-    printf("|  • Parentheses change the evaluation order                                                    |\n");
+    printf("|   Expression is read from LEFT TO RIGHT                                                      |\n");
+    printf("|   Two stacks are used: one for numbers and one for operators                                 |\n");
+    printf("|   Operators are processed according to their precedence                                      |\n");
+    printf("|   Parentheses change the evaluation order                                                    |\n");
     printf("|                                                                                               |\n");
     printf("+===============================================================================================+\n");
     color_normal();
@@ -145,9 +164,9 @@ int main() {
     printf("+===============================================================================================+\n");
     printf("| EXAMPLES:                                                                                     |\n");
     printf("+===============================================================================================|\n");
-    printf("|  • 3+4*5           ->    23                                                                   |\n");
-    printf("|  • (3+4)*5         ->    35                                                                   |\n");
-    printf("|  • 2^3+4*5         ->    28                                                                   |\n");
+    printf("|   3+4*5           ->    23                                                                   |\n");
+    printf("|   (3+4)*5         ->    35                                                                   |\n");
+    printf("|   2^3+4*5         ->    28                                                                   |\n");
     printf("+===============================================================================================+\n");
     color_normal();
 
@@ -276,8 +295,6 @@ int main() {
 
     return 0;
 }
-
-// Funciones existentes (sin cambios en la lógica, solo ajustes estéticos)...
 
 // Validate expression syntax
 int validarSintaxis(const char *expr) {
